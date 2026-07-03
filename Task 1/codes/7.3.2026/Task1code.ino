@@ -1,9 +1,4 @@
-//Written by Baris
-// -------- Ultrasonic Sensors --------
-#define RIGHT_TRIG A5
-#define RIGHT_ECHO A4
-#define LEFT_ECHO A2
-#define LEFT_TRIG A3
+// Written by Baris
 
 // -------- IR Line Sensors --------
 #define RIGHT_IR A0
@@ -21,132 +16,95 @@
 #define LEFT_IN2 9
 
 // -------- Settings --------
-int motorSpeed = 90;
-int turnSpeed = 85;
-int obstacleLimit = 20; // cm
+int motorSpeed = 85; // def 90
+int turnSpeed = 80; // def 110
+int correctionTime = 10; // ms
 
-// Change these if your IR sensors work opposite
 #define BLACK LOW
 #define WHITE HIGH
 
 void setup() {
-pinMode(RIGHT_TRIG, OUTPUT);
-pinMode(RIGHT_ECHO, INPUT);
-pinMode(LEFT_TRIG, OUTPUT);
-pinMode(LEFT_ECHO, INPUT);
+  pinMode(RIGHT_IR, INPUT);
+  pinMode(LEFT_IR, INPUT);
 
-pinMode(RIGHT_IR, INPUT);
-pinMode(LEFT_IR, INPUT);
+  pinMode(RIGHT_EN1, OUTPUT);
+  pinMode(RIGHT_IN1, OUTPUT);
+  pinMode(RIGHT_IN2, OUTPUT);
 
-pinMode(RIGHT_EN1, OUTPUT);
-pinMode(RIGHT_IN1, OUTPUT);
-pinMode(RIGHT_IN2, OUTPUT);
+  pinMode(LEFT_EN1, OUTPUT);
+  pinMode(LEFT_IN1, OUTPUT);
+  pinMode(LEFT_IN2, OUTPUT);
 
-pinMode(LEFT_EN1, OUTPUT);
-pinMode(LEFT_IN1, OUTPUT);
-pinMode(LEFT_IN2, OUTPUT);
-
-Serial.begin(9600);
+  Serial.begin(9600);
 }
 
 void loop() {
-int rightIR = digitalRead(RIGHT_IR);
-int leftIR = digitalRead(LEFT_IR);
+  int rightIR = digitalRead(RIGHT_IR);
+  int leftIR = digitalRead(LEFT_IR);
 
-long rightDistance = getDistance(RIGHT_TRIG, RIGHT_ECHO);
-delay(30);
-long leftDistance = getDistance(LEFT_TRIG, LEFT_ECHO);
-delay(30);
+  Serial.print("Left IR: ");
+  Serial.print(leftIR);
+  Serial.print(" Right IR: ");
+  Serial.println(rightIR);
 
-Serial.print("Left IR: ");
-Serial.print(leftIR);
-Serial.print(" Right IR: ");
-Serial.print(rightIR);
-Serial.print(" Left US: ");
-Serial.print(leftDistance);
-Serial.print("cm Right US: ");
-Serial.print(rightDistance);
-Serial.println("cm");
-
-// Stop if obstacle is close
-if (rightDistance < obstacleLimit || leftDistance < obstacleLimit) {
-stopMotors();
-return;
-}
-
-// Line following logic
-if (leftIR == WHITE && rightIR == WHITE) {
-forward();
-}
-else if (leftIR == WHITE && rightIR == BLACK) {
-turnLeft();
-}
-else if (leftIR == BLACK && rightIR == WHITE) {
-turnRight();
-}
-else {
-stopMotors();
-}
-}
-
-long getDistance(int trigPin, int echoPin) { //TBU
-digitalWrite(trigPin, LOW);
-delayMicroseconds(2);
-
-digitalWrite(trigPin, HIGH);
-delayMicroseconds(10);
-digitalWrite(trigPin, LOW);
-
-long duration = pulseIn(echoPin, HIGH, 30000);
-
-if (duration == 0) {
-return 999;
-}
-
-return duration * 0.034 / 2;
+  if (leftIR == WHITE && rightIR == WHITE) {
+    forward();
+  }
+  else if (leftIR == WHITE && rightIR == BLACK) {
+    turnLeft();
+  }
+  else if (leftIR == BLACK && rightIR == WHITE) {
+    turnRight();
+  }
+  else {
+    forward(); // def fwd
+  }
 }
 
 void forward() {
-analogWrite(RIGHT_EN1, motorSpeed);
-analogWrite(LEFT_EN1, motorSpeed);
+  digitalWrite(RIGHT_IN1, HIGH);
+  digitalWrite(RIGHT_IN2, LOW);
 
+  digitalWrite(LEFT_IN1, HIGH);
+  digitalWrite(LEFT_IN2, LOW);
 
-digitalWrite(RIGHT_IN1, HIGH);
-digitalWrite(RIGHT_IN2, LOW);
-
-digitalWrite(LEFT_IN1, HIGH);
-digitalWrite(LEFT_IN2, LOW);
+  analogWrite(RIGHT_EN1, motorSpeed);
+  analogWrite(LEFT_EN1, motorSpeed);
 }
 
 void turnRight() {
-analogWrite(RIGHT_EN1, 0);
-analogWrite(LEFT_EN1, turnSpeed);
+  digitalWrite(RIGHT_IN1, LOW);
+  digitalWrite(RIGHT_IN2, LOW);
 
-digitalWrite(RIGHT_IN1, LOW);
-digitalWrite(RIGHT_IN2, LOW);
+  digitalWrite(LEFT_IN1, HIGH);
+  digitalWrite(LEFT_IN2, LOW);
 
-digitalWrite(LEFT_IN1, HIGH);
-digitalWrite(LEFT_IN2, LOW);
+  analogWrite(RIGHT_EN1, 0);
+  analogWrite(LEFT_EN1, turnSpeed);
+
+  delay(correctionTime);
 }
 
 void turnLeft() {
-analogWrite(RIGHT_EN1, turnSpeed);
-analogWrite(LEFT_EN1, 0);
+  digitalWrite(RIGHT_IN1, HIGH);
+  digitalWrite(RIGHT_IN2, LOW);
 
-digitalWrite(RIGHT_IN1, HIGH);
-digitalWrite(RIGHT_IN2, LOW);
+  digitalWrite(LEFT_IN1, LOW);
+  digitalWrite(LEFT_IN2, LOW);
 
-digitalWrite(LEFT_IN1, LOW);
-digitalWrite(LEFT_IN2, LOW);
+  analogWrite(RIGHT_EN1, turnSpeed);
+  analogWrite(LEFT_EN1, 0);
+
+  delay(correctionTime);
 }
 
 void stopMotors() {
-analogWrite(RIGHT_EN1, 0);
-analogWrite(LEFT_EN1, 0);
+  analogWrite(RIGHT_EN1, 0);
+  analogWrite(LEFT_EN1, 0);
 
-digitalWrite(RIGHT_IN1, LOW);
-digitalWrite(RIGHT_IN2, LOW);
+  digitalWrite(RIGHT_IN1, LOW);
+  digitalWrite(RIGHT_IN2, LOW);
 
-digitalWrite(LEFT_IN1, LOW);
-digitalWrite(LEFT_IN2, LOW);
+  digitalWrite(LEFT_IN1, LOW);
+  digitalWrite(LEFT_IN2, LOW);
 }
